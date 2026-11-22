@@ -1,6 +1,6 @@
 # PersonalExpenseTracker · 微信消费记账小程序
 
-用本地 **SQLite**（sql.js）记录日常消费，支持预设/自定义消费项，以及按天、周、月、年、消费项的统计报表。
+用本地 **SQLite 兼容引擎**（`utils/mini-sqlite.js`，纯 JS）记录日常消费，支持预设/自定义消费项，以及按天、周、月、年、消费项的统计报表。
 
 ## 功能
 
@@ -15,14 +15,34 @@
 2. 选择「导入项目」，目录指向本仓库根目录
 3. AppID 可使用测试号，或直接用项目里的 `touristappid`
 4. 基础库建议 **3.5.5+**（`project.config.json` 已配置）
-5. 编译后即可在模拟器中使用；数据保存在小程序本地用户目录 `expense.sqlite`
+5. 编译后即可在模拟器中使用；数据保存在小程序本地用户目录 `expense.minidb`
 
-> 本仓库 `preview/index.html` 是页面视觉预览（非运行时），可用浏览器打开快速查看 UI。真实数据与 SQLite 需在微信开发者工具中验证。
+> 本仓库 `preview/index.html` 是页面视觉预览（非运行时），可用浏览器打开快速查看 UI。真实数据需在微信开发者工具中验证。
+
+### 若仍看到 `utils/sql-asm.js` 相关提示
+
+仓库 **已删除** `utils/sql-asm.js`，且 `project.config.json` / `project.private.config.json` 的 `babelSetting.ignore` 均为空。若开发者工具仍提示：
+
+```text
+[JS 文件编译错误] 以下文件通过自定义配置，已跳过 ES6 转 ES5 的处理
+utils/sql-asm.js
+```
+
+说明本机还留着旧的私有配置或缓存，按顺序处理：
+
+1. 确认已 `git pull` 到最新 main，且项目目录下 **没有** `utils/sql-asm.js`
+2. 打开（或删除后让工具重建）根目录 `project.private.config.json`，确保：
+   ```json
+   "babelSetting": { "ignore": [] }
+   ```
+   其中 **不要** 再出现 `"utils/sql-asm.js"`
+3. 微信开发者工具：关闭项目 → 「清缓存」→「全部清除」→ 重新「导入项目」指向本仓库
+4. 本地自检：`node scripts/check-miniprogram-deps.js`（应输出 `DEPS_OK`）
 
 ### 可选：Node 侧验证
 
 ```bash
-node scripts/check-miniprogram-deps.js   # 确认无 fs/path/crypto 静态依赖、无 sql-asm.js
+node scripts/check-miniprogram-deps.js   # 无 fs/path/crypto；无 sql-asm 文件与配置
 node scripts/test-db.js                   # 记账读写与统计回归
 ```
 
@@ -38,7 +58,7 @@ node scripts/test-db.js                   # 记账读写与统计回归
 | 消费项 | `pages/categories` | 分类列表 |
 | 编辑消费项 | `pages/category-edit` | 新增 / 编辑 / 删除分类 |
 
-## 数据结构（SQLite）
+## 数据结构（SQLite 兼容）
 
 数据库文件：`${wx.env.USER_DATA_PATH}/expense.minidb`（纯 JS SQLite 兼容引擎，JSON 落盘）
 
@@ -70,7 +90,7 @@ node scripts/test-db.js                   # 记账读写与统计回归
 - 运行时：微信小程序
 - 存储：`utils/mini-sqlite.js`（小程序专用纯 JS SQLite 兼容引擎，**不含** Node `fs`/`path`/`crypto`）+ `utils/db.js` 封装写盘
 - 业务：`services/expense.js` / `category.js` / `stats.js`
-- 说明：已移除 `sql-asm.js`。官方 sql.js 各构建仍静态 `require("fs"|"path"|"crypto")`，微信依赖分析会告警；故不再嵌入 sql.js。
+- 说明：已移除 `sql-asm.js`（勿再加入 `babelSetting.ignore`）
 
 ## 目录结构
 
@@ -78,8 +98,8 @@ node scripts/test-db.js                   # 记账读写与统计回归
 ├── app.js / app.json / app.wxss
 ├── pages/           # 明细、记账、统计、消费项
 ├── services/        # 业务查询与写入
-├── utils/           # SQLite 与格式化工具
+├── utils/           # mini-sqlite 与格式化工具
 ├── images/          # Tab 图标
 ├── preview/         # 浏览器视觉预览
-└── scripts/         # Node 测试脚本
+└── scripts/         # Node 测试与依赖检查脚本
 ```
