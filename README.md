@@ -25,6 +25,8 @@
 node scripts/test-db.js
 ```
 
+落盘使用 `FileSystemManager.writeFile({ filePath, data })`（注意参数名是 **`filePath`**，不是 `path`）。数据库路径为 `` `${wx.env.USER_DATA_PATH}/expense.sqlite` ``。
+
 ## 主要页面
 
 | 页面 | 路径 | 说明 |

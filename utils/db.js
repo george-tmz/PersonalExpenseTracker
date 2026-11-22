@@ -21,8 +21,20 @@ let db = null
 let readyPromise = null
 let persistTimer = null
 
+function getUserDataPath() {
+  // 微信文档：本地用户文件目录通过 wx.env.USER_DATA_PATH 获取
+  const env = (typeof wx !== 'undefined' && wx.env) || {}
+  const base = env.USER_DATA_PATH
+  if (typeof base !== 'string' || !base) {
+    throw new Error(
+      '无法获取用户文件目录（wx.env.USER_DATA_PATH 无效），请确认在微信小程序环境运行'
+    )
+  }
+  return base
+}
+
 function getDbPath() {
-  return `${wx.env.USER_DATA_PATH}/${DB_FILE}`
+  return `${getUserDataPath()}/${DB_FILE}`
 }
 
 function ensureGlobals() {
@@ -44,14 +56,19 @@ function loadSqlEngine() {
   })
 }
 
-function readFileBuffer(path) {
+function readFileBuffer(filePath) {
   return new Promise((resolve) => {
+    if (typeof filePath !== 'string' || !filePath) {
+      resolve(null)
+      return
+    }
     const fs = wx.getFileSystemManager()
+    // access 参数名为 path；readFile / writeFile 参数名为 filePath
     fs.access({
-      path,
+      path: filePath,
       success() {
         fs.readFile({
-          path,
+          filePath,
           success: (res) => resolve(res.data),
           fail: () => resolve(null)
         })
@@ -63,11 +80,19 @@ function readFileBuffer(path) {
   })
 }
 
-function writeFileBuffer(path, data) {
+function writeFileBuffer(filePath, data) {
   return new Promise((resolve, reject) => {
+    if (typeof filePath !== 'string' || !filePath) {
+      reject(
+        new Error(
+          'writeFile: filePath 无效（应为字符串）。请检查 wx.env.USER_DATA_PATH'
+        )
+      )
+      return
+    }
     const fs = wx.getFileSystemManager()
     fs.writeFile({
-      path,
+      filePath,
       data,
       success: resolve,
       fail: reject
