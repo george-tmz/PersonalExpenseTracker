@@ -70,6 +70,20 @@ global.wx = {
 }
 
 async function main() {
+  // 依赖分析回归：sql-asm 不得再静态引用 Node 内置模块
+  const sqlAsm = require('fs').readFileSync(
+    require('path').join(__dirname, '../utils/sql-asm.js'),
+    'utf8'
+  )
+  for (const name of ['fs', 'path', 'crypto']) {
+    if (
+      sqlAsm.includes(`require("${name}")`) ||
+      sqlAsm.includes(`require('${name}')`)
+    ) {
+      throw new Error(`sql-asm.js 仍包含 require("${name}")，依赖分析会告警`)
+    }
+  }
+
   const db = require('../utils/db')
   const categoryService = require('../services/category')
   const expenseService = require('../services/expense')
