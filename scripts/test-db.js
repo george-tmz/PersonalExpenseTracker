@@ -12,18 +12,48 @@ global.wx = {
   env: { USER_DATA_PATH: tmpDir },
   getFileSystemManager() {
     return {
+      // 与微信 API 对齐：access 用 path；readFile/writeFile 用 filePath
       access({ path: p, success, fail }) {
+        if (typeof p !== 'string') {
+          fail({ errMsg: 'access:fail parameter error: path should be String' })
+          return
+        }
         if (fs.existsSync(p)) success()
         else fail({ errMsg: 'access:fail' })
       },
-      readFile({ path: p, success, fail }) {
+      readFile({ filePath, path: legacyPath, success, fail }) {
+        const p = filePath
+        if (typeof p !== 'string') {
+          fail({
+            errMsg:
+              'readFile:fail parameter error: parameter.filePath should be String instead of Undefined;'
+          })
+          return
+        }
+        if (legacyPath && !filePath) {
+          fail({ errMsg: 'readFile:fail unexpected legacy path key' })
+          return
+        }
         try {
           success({ data: fs.readFileSync(p) })
         } catch (err) {
           fail(err)
         }
       },
-      writeFile({ path: p, data, success, fail }) {
+      writeFile({ filePath, path: legacyPath, success, fail, data }) {
+        const p = filePath
+        if (typeof p !== 'string') {
+          fail({
+            errno: 1001,
+            errMsg:
+              'writeFile:fail parameter error: parameter.filePath should be String instead of Undefined;'
+          })
+          return
+        }
+        if (legacyPath && !filePath) {
+          fail({ errMsg: 'writeFile:fail unexpected legacy path key' })
+          return
+        }
         try {
           const buf = Buffer.isBuffer(data)
             ? data
@@ -119,6 +149,22 @@ async function main() {
   }
 
   if (!fs.existsSync(dbFile)) throw new Error('未生成 sqlite 文件')
+
+  // 回归：模拟误用 path 而非 filePath 时应报与开发者工具一致的错误
+  await new Promise((resolve, reject) => {
+    wx.getFileSystemManager().writeFile({
+      path: dbFile,
+      data: Buffer.from('x'),
+      success: () => reject(new Error('误用 path 不应成功')),
+      fail: (err) => {
+        if (!err || !/filePath should be String/.test(err.errMsg || '')) {
+          reject(new Error(`期望 filePath 参数错误，实际: ${JSON.stringify(err)}`))
+          return
+        }
+        resolve()
+      }
+    })
+  })
 
   console.log('TEST_OK')
   console.log(
