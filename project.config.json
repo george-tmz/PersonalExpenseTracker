@@ -39,9 +39,7 @@
     "showES6CompileOption": false,
     "minifyWXML": true,
     "babelSetting": {
-      "ignore": [
-        "utils/sql-asm.js"
-      ],
+      "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
     }

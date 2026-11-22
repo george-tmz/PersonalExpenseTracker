@@ -19,13 +19,14 @@
 
 > 本仓库 `preview/index.html` 是页面视觉预览（非运行时），可用浏览器打开快速查看 UI。真实数据与 SQLite 需在微信开发者工具中验证。
 
-### 可选：Node 侧验证 SQLite 业务逻辑
+### 可选：Node 侧验证
 
 ```bash
-node scripts/test-db.js
+node scripts/check-miniprogram-deps.js   # 确认无 fs/path/crypto 静态依赖、无 sql-asm.js
+node scripts/test-db.js                   # 记账读写与统计回归
 ```
 
-落盘使用 `FileSystemManager.writeFile({ filePath, data })`（注意参数名是 **`filePath`**，不是 `path`）。数据库路径为 `` `${wx.env.USER_DATA_PATH}/expense.sqlite` ``。
+落盘使用 `FileSystemManager.writeFile({ filePath, data })`（注意参数名是 **`filePath`**，不是 `path`）。数据库路径为 `` `${wx.env.USER_DATA_PATH}/expense.minidb` ``。
 
 ## 主要页面
 
@@ -39,7 +40,7 @@ node scripts/test-db.js
 
 ## 数据结构（SQLite）
 
-数据库文件：`${wx.env.USER_DATA_PATH}/expense.sqlite`
+数据库文件：`${wx.env.USER_DATA_PATH}/expense.minidb`（纯 JS SQLite 兼容引擎，JSON 落盘）
 
 ### `categories` 消费项
 
@@ -67,9 +68,9 @@ node scripts/test-db.js
 ## 技术说明
 
 - 运行时：微信小程序
-- 存储：`utils/sql-asm.js`（sql.js asm 构建，已裁剪 Node `fs`/`path`/`crypto` 引用，避免开发者工具依赖分析告警）+ `utils/db.js` 封装写盘  
-  若需从上游重新生成：下载官方 `sql-asm.js` 后执行 `node scripts/patch-sql-asm-for-miniprogram.js`
+- 存储：`utils/mini-sqlite.js`（小程序专用纯 JS SQLite 兼容引擎，**不含** Node `fs`/`path`/`crypto`）+ `utils/db.js` 封装写盘
 - 业务：`services/expense.js` / `category.js` / `stats.js`
+- 说明：已移除 `sql-asm.js`。官方 sql.js 各构建仍静态 `require("fs"|"path"|"crypto")`，微信依赖分析会告警；故不再嵌入 sql.js。
 
 ## 目录结构
 

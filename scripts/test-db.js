@@ -1,18 +1,53 @@
 /**
- * 在 Node 中模拟微信文件 API，验证 SQLite 业务逻辑。
+ * 在 Node 中模拟微信文件 API，验证 SQLite 业务逻辑；
+ * 并扫描小程序源码确保无 Node 内置模块静态依赖。
  */
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'expense-db-'))
-const dbFile = path.join(tmpDir, 'expense.sqlite')
+const dbFile = path.join(tmpDir, 'expense.minidb')
+
+function assertNoNodeBuiltinDeps() {
+  const root = path.join(__dirname, '..')
+  const skip = new Set([
+    path.join(root, 'scripts'),
+    path.join(root, 'node_modules'),
+    path.join(root, '.git')
+  ])
+  const offenders = []
+  const re = /require\s*\(\s*['"](?:fs|path|crypto)['"]\s*\)|from\s+['"](?:fs|path|crypto)['"]|import\s*\(\s*['"](?:fs|path|crypto)['"]\s*\)/
+
+  function walk(dir) {
+    if (skip.has(dir)) return
+    fs.readdirSync(dir, { withFileTypes: true }).forEach((ent) => {
+      const full = path.join(dir, ent.name)
+      if (ent.isDirectory()) {
+        if (ent.name === 'node_modules' || ent.name === '.git' || ent.name === 'scripts') return
+        walk(full)
+        return
+      }
+      if (!/\.(js|json|wxs)$/.test(ent.name)) return
+      if (ent.name === 'sql-asm.js') {
+        offenders.push(`${full} (不应再存在 sql-asm.js)`)
+        return
+      }
+      const text = fs.readFileSync(full, 'utf8')
+      if (re.test(text)) offenders.push(full)
+    })
+  }
+
+  walk(root)
+  if (offenders.length) {
+    throw new Error(`发现 Node 内置依赖或遗留 sql-asm:\n${offenders.join('\n')}`)
+  }
+}
 
 global.wx = {
   env: { USER_DATA_PATH: tmpDir },
   getFileSystemManager() {
     return {
-      // 与微信 API 对齐：access 用 path；readFile/writeFile 用 filePath
       access({ path: p, success, fail }) {
         if (typeof p !== 'string') {
           fail({ errMsg: 'access:fail parameter error: path should be String' })
@@ -21,28 +56,22 @@ global.wx = {
         if (fs.existsSync(p)) success()
         else fail({ errMsg: 'access:fail' })
       },
-      readFile({ filePath, path: legacyPath, success, fail }) {
-        const p = filePath
-        if (typeof p !== 'string') {
+      readFile({ filePath, success, fail }) {
+        if (typeof filePath !== 'string') {
           fail({
             errMsg:
               'readFile:fail parameter error: parameter.filePath should be String instead of Undefined;'
           })
           return
         }
-        if (legacyPath && !filePath) {
-          fail({ errMsg: 'readFile:fail unexpected legacy path key' })
-          return
-        }
         try {
-          success({ data: fs.readFileSync(p) })
+          success({ data: fs.readFileSync(filePath) })
         } catch (err) {
           fail(err)
         }
       },
-      writeFile({ filePath, path: legacyPath, success, fail, data }) {
-        const p = filePath
-        if (typeof p !== 'string') {
+      writeFile({ filePath, success, fail, data }) {
+        if (typeof filePath !== 'string') {
           fail({
             errno: 1001,
             errMsg:
@@ -50,15 +79,11 @@ global.wx = {
           })
           return
         }
-        if (legacyPath && !filePath) {
-          fail({ errMsg: 'writeFile:fail unexpected legacy path key' })
-          return
-        }
         try {
           const buf = Buffer.isBuffer(data)
             ? data
             : Buffer.from(data instanceof ArrayBuffer ? new Uint8Array(data) : data)
-          fs.writeFileSync(p, buf)
+          fs.writeFileSync(filePath, buf)
           success()
         } catch (err) {
           fail(err)
@@ -70,19 +95,7 @@ global.wx = {
 }
 
 async function main() {
-  // 依赖分析回归：sql-asm 不得再静态引用 Node 内置模块
-  const sqlAsm = require('fs').readFileSync(
-    require('path').join(__dirname, '../utils/sql-asm.js'),
-    'utf8'
-  )
-  for (const name of ['fs', 'path', 'crypto']) {
-    if (
-      sqlAsm.includes(`require("${name}")`) ||
-      sqlAsm.includes(`require('${name}')`)
-    ) {
-      throw new Error(`sql-asm.js 仍包含 require("${name}")，依赖分析会告警`)
-    }
-  }
+  assertNoNodeBuiltinDeps()
 
   const db = require('../utils/db')
   const categoryService = require('../services/category')
@@ -124,6 +137,10 @@ async function main() {
     throw new Error(`日合计错误: ${daySum.total}`)
   }
 
+  const list = expenseService.listExpensesByDate('2026-11-22')
+  if (list.length !== 2) throw new Error(`日明细笔数错误: ${list.length}`)
+  if (!list[0].category_name) throw new Error('JOIN 未返回 category_name')
+
   const monthReport = statsService.buildReport('month', '2026-11-22')
   if (monthReport.summary.count !== 3) {
     throw new Error(`月报表笔数错误: ${monthReport.summary.count}`)
@@ -137,6 +154,9 @@ async function main() {
   if (!weekReport.range.label || !yearReport.trend.length) {
     throw new Error('周/年报表异常')
   }
+  if (yearReport.trend.length !== 12) {
+    throw new Error(`年趋势应有 12 个月，实际 ${yearReport.trend.length}`)
+  }
 
   categoryService.updateCategory(custom.id, {
     name: '手冲咖啡',
@@ -144,16 +164,13 @@ async function main() {
     color: '#EA580C'
   })
 
-  // 持久化后重新打开
   await db.persist()
-  // 重置模块缓存，模拟冷启动
   Object.keys(require.cache).forEach((key) => {
     if (key.includes(`${path.sep}utils${path.sep}`) || key.includes(`${path.sep}services${path.sep}`)) {
       delete require.cache[key]
     }
   })
 
-  // 重新打补丁 wx 后再 require
   const db2 = require('../utils/db')
   await db2.init()
   const expenseService2 = require('../services/expense')
@@ -162,23 +179,7 @@ async function main() {
     throw new Error('持久化后数据丢失')
   }
 
-  if (!fs.existsSync(dbFile)) throw new Error('未生成 sqlite 文件')
-
-  // 回归：模拟误用 path 而非 filePath 时应报与开发者工具一致的错误
-  await new Promise((resolve, reject) => {
-    wx.getFileSystemManager().writeFile({
-      path: dbFile,
-      data: Buffer.from('x'),
-      success: () => reject(new Error('误用 path 不应成功')),
-      fail: (err) => {
-        if (!err || !/filePath should be String/.test(err.errMsg || '')) {
-          reject(new Error(`期望 filePath 参数错误，实际: ${JSON.stringify(err)}`))
-          return
-        }
-        resolve()
-      }
-    })
-  })
+  if (!fs.existsSync(dbFile)) throw new Error('未生成 minidb 文件')
 
   console.log('TEST_OK')
   console.log(
@@ -189,7 +190,8 @@ async function main() {
         monthTotal: monthReport.summary.total,
         categoryRows: monthReport.categories.length,
         dbFile,
-        dbBytes: fs.statSync(dbFile).size
+        dbBytes: fs.statSync(dbFile).size,
+        noSqlAsm: !fs.existsSync(path.join(__dirname, '../utils/sql-asm.js'))
       },
       null,
       2
