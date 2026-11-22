@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="card block">
+    <view class="field">
+      <view class="label">名称</view>
+      <input
+        class="input"
+        placeholder="例如：咖啡、话费"
+        maxlength="20"
+        value="{{name}}"
+        bindinput="onNameInput"
+      />
+    </view>
+
+    <view class="field">
+      <view class="label">图标</view>
+      <view class="options">
+        <view
+          wx:for="{{iconOptions}}"
+          wx:key="value"
+          class="chip {{icon === item.value ? 'active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onSelectIcon"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="label">颜色</view>
+      <view class="colors">
+        <view
+          wx:for="{{colorOptions}}"
+          wx:key="*this"
+          class="color {{color === item ? 'active' : ''}}"
+          style="background: {{item}};"
+          data-value="{{item}}"
+          bindtap="onSelectColor"
+        ></view>
+      </view>
+    </view>
+
+    <view class="preview">
+      <view class="preview-icon" style="background: {{color}};">{{previewText}}</view>
+      <text>{{name || '预览名称'}}</text>
+    </view>
+  </view>
+
+  <button class="btn-primary save" bindtap="onSave">保存</button>
+  <button wx:if="{{id}}" class="btn-ghost delete" bindtap="onDelete">删除消费项</button>
+</view>

@@ -1,0 +1,28 @@
+<view class="container">
+  <view class="intro card">
+    <view class="intro-title">管理消费项</view>
+    <view class="muted">系统已预设常用分类，也可自行新增、编辑或删除未使用的消费项。</view>
+  </view>
+
+  <view class="card list" wx:if="{{list.length}}">
+    <view
+      class="row"
+      wx:for="{{list}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onEdit"
+    >
+      <view class="icon" style="background: {{item.color}};">{{item.iconText}}</view>
+      <view class="meta">
+        <view class="name">
+          {{item.name}}
+          <text class="tag" wx:if="{{item.is_preset}}">预设</text>
+        </view>
+        <view class="muted sub">点击编辑</view>
+      </view>
+      <view class="arrow muted">›</view>
+    </view>
+  </view>
+
+  <button class="btn-primary add" bindtap="onCreate">新增消费项</button>
+</view>

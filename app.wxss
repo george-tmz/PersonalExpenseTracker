@@ -1,0 +1,91 @@
+page {
+  --color-primary: #0f766e;
+  --color-primary-soft: #ccfbf1;
+  --color-accent: #ea580c;
+  --color-bg: #f3f6f5;
+  --color-card: #ffffff;
+  --color-text: #111827;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --radius: 16rpx;
+  --shadow: 0 8rpx 24rpx rgba(15, 118, 110, 0.08);
+
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 28rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+view,
+text,
+button,
+input,
+textarea,
+picker {
+  box-sizing: border-box;
+}
+
+.container {
+  padding: 24rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.amount {
+  font-family: 'DIN Alternate', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.5rpx;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 88rpx;
+  height: 88rpx;
+  padding: 0 40rpx;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  line-height: 72rpx;
+  height: 76rpx;
+  padding: 0 32rpx;
+}
+
+.btn-ghost::after {
+  border: none;
+}
+
+.empty {
+  padding: 80rpx 40rpx;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.empty-title {
+  font-size: 30rpx;
+  color: var(--color-text);
+  margin-bottom: 8rpx;
+}

@@ -1,0 +1,90 @@
+.block {
+  padding: 28rpx;
+  margin-bottom: 28rpx;
+}
+
+.field {
+  margin-bottom: 28rpx;
+}
+
+.label {
+  font-size: 26rpx;
+  color: var(--color-muted);
+  margin-bottom: 12rpx;
+}
+
+.input {
+  background: #f8faf9;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  font-size: 30rpx;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.chip {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  font-size: 24rpx;
+  color: var(--color-muted);
+}
+
+.chip.active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.color {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 4rpx solid transparent;
+}
+
+.color.active {
+  border-color: #111827;
+  transform: scale(1.08);
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.preview-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.save {
+  width: 100%;
+}
+
+.delete {
+  width: 100%;
+  margin-top: 20rpx;
+  color: #dc2626;
+  border-color: #fecaca;
+}

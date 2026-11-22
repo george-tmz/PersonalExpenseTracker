@@ -1,0 +1,9 @@
+{
+  "name": "personal-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "微信小程序 · 个人日常消费记账（本地 SQLite）",
+  "scripts": {
+    "test": "node scripts/test-db.js"
+  }
+}

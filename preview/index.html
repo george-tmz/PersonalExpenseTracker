@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>消费记账 · 预览</title>
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-soft: #ccfbf1;
+      --accent: #ea580c;
+      --bg: #f3f6f5;
+      --card: #fff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+      background: #111827;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .phone {
+      width: 390px;
+      height: 780px;
+      background: var(--bg);
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: 10px solid #1f2937;
+    }
+    .status {
+      height: 44px;
+      padding: 12px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--primary);
+      color: #fff;
+    }
+    .nav {
+      background: var(--primary);
+      color: #fff;
+      text-align: center;
+      padding: 10px 16px 14px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .content { flex: 1; overflow: auto; padding: 12px; }
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(15,118,110,.08);
+      margin-bottom: 12px;
+    }
+    .hero {
+      background: linear-gradient(145deg, #0f766e, #14b8a6);
+      color: #fff;
+      padding: 16px;
+    }
+    .hero .total { font-size: 36px; font-weight: 700; margin: 6px 0; }
+    .muted { color: var(--muted); }
+    .row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: none; }
+    .icon {
+      width: 40px; height: 40px; border-radius: 12px; color: #fff;
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .meta { flex: 1; min-width: 0; }
+    .name { font-weight: 600; }
+    .money { color: var(--accent); font-weight: 700; }
+    .tabs {
+      display: flex; gap: 4px; padding: 6px; margin-bottom: 12px;
+    }
+    .tab {
+      flex: 1; text-align: center; padding: 8px 0; border-radius: 8px;
+      font-size: 13px; color: var(--muted); background: #fff;
+    }
+    .tab.active { background: var(--primary); color: #fff; font-weight: 600; }
+    .bars {
+      display: flex; align-items: flex-end; height: 120px; gap: 8px;
+      padding: 12px 16px 8px;
+    }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+    .bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+    .bar {
+      width: 16px; border-radius: 8px 8px 4px 4px;
+      background: linear-gradient(180deg, #5eead4, #0f766e);
+    }
+    .bar-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .cat-row { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .cat-row:last-child { border-bottom: none; }
+    .track { height: 6px; background: #e5e7eb; border-radius: 99px; margin-top: 8px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 99px; }
+    .tabbar {
+      height: 64px; background: #fff; border-top: 1px solid var(--border);
+      display: flex;
+    }
+    .tabbar button {
+      flex: 1; border: 0; background: transparent; font-size: 11px;
+      color: var(--muted); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px; cursor: pointer;
+    }
+    .tabbar button.active { color: var(--primary); font-weight: 600; }
+    .glyph {
+      width: 22px; height: 22px; border-radius: 6px; background: currentColor; opacity: .25;
+    }
+    .tabbar button.active .glyph { opacity: 1; background: var(--primary); }
+    .page { display: none; }
+    .page.active { display: block; }
+    .amount-box { padding: 18px 16px; }
+    .amount-box .yen { font-size: 28px; color: var(--primary); font-weight: 700; }
+    .amount-box .val { font-size: 40px; font-weight: 700; }
+    .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
+    .cat {
+      text-align: center; padding: 8px 4px; border-radius: 10px; border: 1px solid transparent;
+      font-size: 12px;
+    }
+    .cat.active { background: var(--primary-soft); border-color: var(--primary); }
+    .save {
+      width: calc(100% - 24px); margin: 8px 12px 20px; height: 44px; border: 0;
+      border-radius: 999px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 600;
+    }
+    .section-title { font-size: 14px; font-weight: 700; margin: 4px 4px 8px; }
+    .title-row { display:flex; justify-content: space-between; align-items:center; padding: 12px 16px 0; }
+    .badge { font-size: 10px; background: var(--primary-soft); color: var(--primary); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  </style>
+</head>
+<body>
+  <div class="phone" id="app">
+    <div class="status"><span>9:41</span><span>预览</span></div>
+    <div class="nav" id="navTitle">消费明细</div>
+    <div class="content">
+      <div class="page active" data-page="index">
+        <div class="card hero">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>2026-11-22 · 周日</strong>
+            <span style="opacity:.85;font-size:12px;">今天</span>
+          </div>
+          <div style="margin-top:14px;font-size:12px;opacity:.9;">当日支出</div>
+          <div class="total">¥35.50</div>
+          <div style="font-size:12px;opacity:.9;">共 2 笔</div>
+        </div>
+        <div class="section-title">账单列表</div>
+        <div class="card">
+          <div class="row">
+            <div class="icon" style="background:#F97316;">餐</div>
+            <div class="meta"><div class="name">餐饮</div><div class="muted" style="font-size:12px;">午餐</div></div>
+            <div class="money">-23.50</div>
+          </div>
+          <div class="row">
+            <div class="icon" style="background:#0EA5E9;">行</div>
+            <div class="meta"><div class="name">交通</div><div class="muted" style="font-size:12px;">地铁</div></div>
+            <div class="money">-12.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" data-page="add">
+        <div class="card amount-box">
+          <div class="muted" style="font-size:12px;">金额</div>
+          <div><span class="yen">¥</span> <span class="val">18.00</span></div>
+        </div>
+        <div class="card">
+          <div class="title-row"><div class="name">消费项</div></div>
+          <div class="cats">
+            <div class="cat"><div class="icon" style="background:#F97316;margin:0 auto 6px;">餐</div>餐饮</div>
+            <div class="cat"><div class="icon" style="background:#0EA5E9;margin:0 auto 6px;">行</div>交通</div>
+            <div class="cat active"><div class="icon" style="background:#14B8A6;margin:0 auto 6px;">娱</div>娱乐</div>
+            <div class="cat"><div class="icon" style="background:#EC4899;margin:0 auto 6px;">购</div>购物</div>
+            <div class="cat"><div class="icon" style="background:#8B5CF6;margin:0 auto 6px;">住</div>居住</div>
+            <div class="cat"><div class="icon" style="background:#EF4444;margin:0 auto 6px;">医</div>医疗</div>
+            <div class="cat"><div class="icon" style="background:#3B82F6;margin:0 auto 6px;">学</div>教育</div>
+            <div class="cat"><div class="icon" style="background:#6B7280;margin:0 auto 6px;">他</div>其他</div>
+          </div>
+        </div>
+        <button class="save">保存记账</button>
+      </div>
+
+      <div class="page" data-page="stats">
+        <div class="tabs card">
+          <div class="tab">天</div>
+          <div class="tab">周</div>
+          <div class="tab active">月</div>
+          <div class="tab">年</div>
+        </div>
+        <div class="card hero">
+          <div style="text-align:center;font-weight:600;">2026年11月</div>
+          <div style="display:flex;justify-content:space-between;margin-top:16px;">
+            <div>
+              <div style="font-size:12px;opacity:.9;">区间支出</div>
+              <div class="total" style="font-size:32px;">¥53.50</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px;opacity:.9;">笔数</div>
+              <div style="font-size:28px;font-weight:700;margin-top:6px;">3</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="title-row"><div class="name">趋势</div></div>
+          <div class="bars">
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:40%"></div></div><div class="bar-label">11-21</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:100%"></div></div><div class="bar-label">11-22</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:0%"></div></div><div class="bar-label">11-23</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:0%"></div></div><div class="bar-label">11-24</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:0%"></div></div><div class="bar-label">11-25</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:0%"></div></div><div class="bar-label">11-26</div></div>
+            <div class="bar-col"><div class="bar-wrap"><div class="bar" style="height:0%"></div></div><div class="bar-label">11-27</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="title-row"><div class="name">按消费项</div><span class="muted" style="font-size:12px;">筛选 ›</span></div>
+          <div class="cat-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:10px;align-items:center;">
+                <div class="icon" style="background:#F97316;">餐</div>
+                <div><div class="name">餐饮</div><div class="muted" style="font-size:12px;">1 笔 · 43.9%</div></div>
+              </div>
+              <div class="money">¥23.50</div>
+            </div>
+            <div class="track"><div class="fill" style="width:43.9%;background:#F97316;"></div></div>
+          </div>
+          <div class="cat-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:10px;align-items:center;">
+                <div class="icon" style="background:#14B8A6;">娱</div>
+                <div><div class="name">娱乐</div><div class="muted" style="font-size:12px;">1 笔 · 33.6%</div></div>
+              </div>
+              <div class="money">¥18.00</div>
+            </div>
+            <div class="track"><div class="fill" style="width:33.6%;background:#14B8A6;"></div></div>
+          </div>
+          <div class="cat-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:10px;align-items:center;">
+                <div class="icon" style="background:#0EA5E9;">行</div>
+                <div><div class="name">交通</div><div class="muted" style="font-size:12px;">1 笔 · 22.4%</div></div>
+              </div>
+              <div class="money">¥12.00</div>
+            </div>
+            <div class="track"><div class="fill" style="width:22.4%;background:#0EA5E9;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" data-page="categories">
+        <div class="card" style="padding:14px 16px;">
+          <div class="name" style="margin-bottom:4px;">管理消费项</div>
+          <div class="muted" style="font-size:13px;">系统已预设常用分类，也可自行新增、编辑。</div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="icon" style="background:#F97316;">餐</div><div class="meta"><div class="name">餐饮 <span class="badge">预设</span></div></div></div>
+          <div class="row"><div class="icon" style="background:#0EA5E9;">行</div><div class="meta"><div class="name">交通 <span class="badge">预设</span></div></div></div>
+          <div class="row"><div class="icon" style="background:#EC4899;">购</div><div class="meta"><div class="name">购物 <span class="badge">预设</span></div></div></div>
+          <div class="row"><div class="icon" style="background:#14B8A6;">娱</div><div class="meta"><div class="name">咖啡</div><div class="muted" style="font-size:12px;">自定义</div></div></div>
+        </div>
+        <button class="save">新增消费项</button>
+      </div>
+    </div>
+    <div class="tabbar">
+      <button class="active" data-target="index"><span class="glyph"></span>明细</button>
+      <button data-target="add"><span class="glyph"></span>记账</button>
+      <button data-target="stats"><span class="glyph"></span>统计</button>
+      <button data-target="categories"><span class="glyph"></span>消费项</button>
+    </div>
+  </div>
+  <script>
+    const titles = {
+      index: '消费明细',
+      add: '记一笔',
+      stats: '统计报表',
+      categories: '消费项'
+    };
+    const buttons = document.querySelectorAll('.tabbar button');
+    const pages = document.querySelectorAll('.page');
+    const navTitle = document.getElementById('navTitle');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        buttons.forEach((b) => b.classList.toggle('active', b === btn));
+        pages.forEach((p) => p.classList.toggle('active', p.dataset.page === target));
+        navTitle.textContent = titles[target];
+      });
+    });
+  </script>
+</body>
+</html>
