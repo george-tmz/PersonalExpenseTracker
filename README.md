@@ -67,7 +67,8 @@ node scripts/test-db.js
 ## 技术说明
 
 - 运行时：微信小程序
-- 存储：`utils/sql-asm.js`（sql.js）+ `utils/db.js` 封装，写盘持久化
+- 存储：`utils/sql-asm.js`（sql.js asm 构建，已裁剪 Node `fs`/`path`/`crypto` 引用，避免开发者工具依赖分析告警）+ `utils/db.js` 封装写盘  
+  若需从上游重新生成：下载官方 `sql-asm.js` 后执行 `node scripts/patch-sql-asm-for-miniprogram.js`
 - 业务：`services/expense.js` / `category.js` / `stats.js`
 
 ## 目录结构

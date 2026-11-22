@@ -45,10 +45,26 @@ function ensureGlobals() {
   if (typeof globalThis.self === 'undefined') {
     globalThis.self = globalThis
   }
+  // 部分小程序运行时没有 Web Crypto；sql-asm 已裁掉 Node crypto 分支
+  const hasGetRandomValues =
+    typeof globalThis.crypto === 'object' &&
+    globalThis.crypto &&
+    typeof globalThis.crypto.getRandomValues === 'function'
+  if (!hasGetRandomValues) {
+    globalThis.crypto = {
+      getRandomValues(arr) {
+        for (let i = 0; i < arr.length; i += 1) {
+          arr[i] = (Math.random() * 256) | 0
+        }
+        return arr
+      }
+    }
+  }
 }
 
 function loadSqlEngine() {
   ensureGlobals()
+  // 使用已裁剪 Node 依赖（fs/path/crypto）的 sql-asm 构建，避免依赖分析告警
   // eslint-disable-next-line import/no-unresolved
   const initSqlJs = require('./sql-asm.js')
   return initSqlJs({
