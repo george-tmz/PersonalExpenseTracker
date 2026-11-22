@@ -1,9 +1,11 @@
 /**
- * 本地 SQLite 数据库封装（基于 sql.js）
- * 持久化文件：wx.env.USER_DATA_PATH/expense.sqlite
+ * 本地 SQLite 兼容数据库封装（纯 JS mini-sqlite，无 Node 内置依赖）
+ * 持久化文件：wx.env.USER_DATA_PATH/expense.minidb
  */
 
-const DB_FILE = 'expense.sqlite'
+const { createEngine } = require('./mini-sqlite')
+
+const DB_FILE = 'expense.minidb'
 
 const PRESET_CATEGORIES = [
   { name: '餐饮', icon: 'food', color: '#F97316', sort_order: 1 },
@@ -22,7 +24,6 @@ let readyPromise = null
 let persistTimer = null
 
 function getUserDataPath() {
-  // 微信文档：本地用户文件目录通过 wx.env.USER_DATA_PATH 获取
   const env = (typeof wx !== 'undefined' && wx.env) || {}
   const base = env.USER_DATA_PATH
   if (typeof base !== 'string' || !base) {
@@ -37,39 +38,8 @@ function getDbPath() {
   return `${getUserDataPath()}/${DB_FILE}`
 }
 
-function ensureGlobals() {
-  // sql.js 在小程序环境需要少量全局垫片
-  if (typeof globalThis.window === 'undefined') {
-    globalThis.window = globalThis
-  }
-  if (typeof globalThis.self === 'undefined') {
-    globalThis.self = globalThis
-  }
-  // 部分小程序运行时没有 Web Crypto；sql-asm 已裁掉 Node crypto 分支
-  const hasGetRandomValues =
-    typeof globalThis.crypto === 'object' &&
-    globalThis.crypto &&
-    typeof globalThis.crypto.getRandomValues === 'function'
-  if (!hasGetRandomValues) {
-    globalThis.crypto = {
-      getRandomValues(arr) {
-        for (let i = 0; i < arr.length; i += 1) {
-          arr[i] = (Math.random() * 256) | 0
-        }
-        return arr
-      }
-    }
-  }
-}
-
 function loadSqlEngine() {
-  ensureGlobals()
-  // 使用已裁剪 Node 依赖（fs/path/crypto）的 sql-asm 构建，避免依赖分析告警
-  // eslint-disable-next-line import/no-unresolved
-  const initSqlJs = require('./sql-asm.js')
-  return initSqlJs({
-    locateFile: () => ''
-  })
+  return Promise.resolve(createEngine())
 }
 
 function readFileBuffer(filePath) {
@@ -79,7 +49,6 @@ function readFileBuffer(filePath) {
       return
     }
     const fs = wx.getFileSystemManager()
-    // access 参数名为 path；readFile / writeFile 参数名为 filePath
     fs.access({
       path: filePath,
       success() {
@@ -106,8 +75,8 @@ function writeFileBuffer(filePath, data) {
       )
       return
     }
-    const fs = wx.getFileSystemManager()
-    fs.writeFile({
+    const fsMgr = wx.getFileSystemManager()
+    fsMgr.writeFile({
       filePath,
       data,
       success: resolve,
@@ -175,7 +144,6 @@ function schedulePersist() {
 function persist() {
   if (!db) return Promise.resolve()
   const data = db.export()
-  // sql.js 返回 Uint8Array；小程序 writeFile 可写 ArrayBuffer
   const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
   return writeFileBuffer(getDbPath(), buffer)
 }
