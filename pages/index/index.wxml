@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="hero card">
+    <view class="hero-top">
+      <view class="date-nav">
+        <view class="nav-btn" bindtap="onPrevDay">‹</view>
+        <picker mode="date" value="{{currentDate}}" bindchange="onPickDate">
+          <view class="date-text">{{currentDate}} · {{weekday}}</view>
+        </picker>
+        <view class="nav-btn" bindtap="onNextDay">›</view>
+      </view>
+      <view class="today-link muted" wx:if="{{!isToday}}" bindtap="onGoToday">回到今天</view>
+    </view>
+    <view class="hero-total">
+      <text class="label">当日支出</text>
+      <view class="amount total">¥{{summary.totalText}}</view>
+      <text class="muted">共 {{summary.count}} 笔</text>
+    </view>
+  </view>
+
+  <view class="section-title">账单列表</view>
+
+  <block wx:if="{{list.length}}">
+    <view class="list card">
+      <view
+        class="row"
+        wx:for="{{list}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onEdit"
+        bindlongpress="onDelete"
+      >
+        <view class="icon" style="background: {{item.color}};">{{item.iconText}}</view>
+        <view class="meta">
+          <view class="name">{{item.category_name}}</view>
+          <view class="note muted">{{item.note || '无备注'}}</view>
+        </view>
+        <view class="amount money">-{{item.amountText}}</view>
+      </view>
+    </view>
+    <view class="hint muted">点击编辑，长按删除</view>
+  </block>
+
+  <view class="empty card" wx:else>
+    <view class="empty-title">这一天还没有记账</view>
+    <view>去「记账」页记一笔吧</view>
+  </view>
+</view>

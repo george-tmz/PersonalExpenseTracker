@@ -1,0 +1,104 @@
+<view class="container">
+  <view class="tabs card">
+    <view
+      wx:for="{{dimensions}}"
+      wx:key="value"
+      class="tab {{dimension === item.value ? 'active' : ''}}"
+      data-value="{{item.value}}"
+      bindtap="onSwitchDimension"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="hero card">
+    <view class="range-nav">
+      <view class="nav-btn" bindtap="onPrev">‹</view>
+      <view class="range-label">{{report.range.label}}</view>
+      <view class="nav-btn" bindtap="onNext">›</view>
+    </view>
+    <view class="summary">
+      <view>
+        <view class="muted label">区间支出</view>
+        <view class="amount total">¥{{report.summary.totalText}}</view>
+      </view>
+      <view class="count-box">
+        <view class="muted label">笔数</view>
+        <view class="count">{{report.summary.count}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section card">
+    <view class="section-title">趋势</view>
+    <scroll-view scroll-x class="chart-scroll" wx:if="{{report.trend.length}}">
+      <view class="chart" style="min-width: {{chartMinWidth}};">
+        <view class="bars">
+          <view class="bar-col" wx:for="{{report.trend}}" wx:key="key">
+            <view class="bar-wrap">
+              <view class="bar" style="height: {{item.height}};"></view>
+            </view>
+            <view class="bar-label muted">{{item.label}}</view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="empty-inline muted" wx:else>暂无趋势数据</view>
+  </view>
+
+  <view class="section card">
+    <view class="section-head">
+      <view class="section-title">按消费项</view>
+      <picker
+        wx:if="{{categoryOptions.length}}"
+        mode="selector"
+        range="{{categoryOptions}}"
+        range-key="name"
+        value="{{categoryIndex}}"
+        bindchange="onPickCategory"
+      >
+        <view class="filter">筛选 ›</view>
+      </picker>
+    </view>
+
+    <block wx:if="{{!selectedCategoryId}}">
+      <view wx:if="{{report.categories.length}}">
+        <view class="cat-row" wx:for="{{report.categories}}" wx:key="id">
+          <view class="cat-left">
+            <view class="icon" style="background: {{item.color}};">{{item.iconText}}</view>
+            <view>
+              <view class="name">{{item.name}}</view>
+              <view class="muted sub">{{item.count}} 笔 · {{item.percentText}}</view>
+            </view>
+          </view>
+          <view class="cat-right">
+            <view class="amount money">¥{{item.totalText}}</view>
+            <view class="bar-track">
+              <view class="bar-fill" style="width: {{item.barWidth}}; background: {{item.color}};"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="empty-inline muted" wx:else>该区间暂无消费</view>
+    </block>
+
+    <block wx:else>
+      <view class="selected-head">
+        <view class="icon" style="background: {{categoryReport.category.color}};">{{categoryReport.category.iconText}}</view>
+        <view>
+          <view class="name">{{categoryReport.category.name}}</view>
+          <view class="muted sub">¥{{categoryReport.summary.totalText}} · {{categoryReport.summary.count}} 笔</view>
+        </view>
+        <view class="clear muted" bindtap="onClearCategory">清除</view>
+      </view>
+      <view wx:if="{{categoryReport.list.length}}">
+        <view class="item-row" wx:for="{{categoryReport.list}}" wx:key="id">
+          <view>
+            <view class="name">{{item.spent_at}}</view>
+            <view class="muted sub">{{item.note || '无备注'}}</view>
+          </view>
+          <view class="amount money">¥{{item.amountText}}</view>
+        </view>
+      </view>
+      <view class="empty-inline muted" wx:else>该消费项在此区间无账单</view>
+    </block>
+  </view>
+</view>

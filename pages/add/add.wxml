@@ -1,0 +1,55 @@
+<view class="container">
+  <view class="amount-card card">
+    <view class="label muted">金额</view>
+    <view class="amount-row">
+      <text class="yen">¥</text>
+      <input
+        class="amount-input amount"
+        type="digit"
+        maxlength="10"
+        placeholder="0.00"
+        value="{{amount}}"
+        bindinput="onAmountInput"
+        focus="{{!editingId}}"
+      />
+    </view>
+  </view>
+
+  <view class="card block">
+    <view class="block-title">消费项</view>
+    <view class="cats">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="cat {{selectedCategoryId === item.id ? 'active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onSelectCategory"
+      >
+        <view class="cat-icon" style="background: {{item.color}};">{{item.iconText}}</view>
+        <text class="cat-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card block form">
+    <view class="form-row">
+      <text class="form-label">日期</text>
+      <picker mode="date" value="{{spentAt}}" bindchange="onDateChange">
+        <view class="form-value">{{spentAt}}</view>
+      </picker>
+    </view>
+    <view class="form-row note-row">
+      <text class="form-label">备注</text>
+      <input
+        class="form-input"
+        placeholder="可选，最多 100 字"
+        maxlength="100"
+        value="{{note}}"
+        bindinput="onNoteInput"
+      />
+    </view>
+  </view>
+
+  <button class="btn-primary save" bindtap="onSubmit">{{editingId ? '保存修改' : '保存记账'}}</button>
+  <button wx:if="{{editingId}}" class="btn-ghost delete" bindtap="onDelete">删除此账单</button>
+</view>
