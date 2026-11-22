@@ -1,0 +1,23 @@
+{
+  "description": "请保持 babelSetting.ignore 为空；勿把已删除的旧引擎路径加回 ES6 跳过白名单。",
+  "projectname": "PersonalExpenseTracker",
+  "libVersion": "3.5.5",
+  "setting": {
+    "urlCheck": true,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "skylineRenderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "compileHotReLoad": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "useIsolateContext": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  }
+}
